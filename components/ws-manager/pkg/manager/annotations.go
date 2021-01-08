@@ -109,7 +109,7 @@ func (m *Manager) markWorkspace(workspaceID string, annotations ...*annotation) 
 			}
 		}
 
-		_, err = client.Update(pod)
+		_, err = client.Update(context.Background(), pod, metav1.UpdateOptions{})
 
 		return err
 	})
@@ -186,7 +186,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 	defer tracing.FinishSpan(span, &err)
 
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(context.Background(), getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
 		if isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("workspace %s has no pod lifecycle independent state", workspaceID)
 		}
@@ -229,7 +229,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 		tracing.LogKV(span, "postPatchPLIS", plisCfg.Annotations[plisDataAnnotation])
 		tracing.LogKV(span, "needsUpdate", "true")
 
-		_, err = m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Update(plisCfg)
+		_, err = m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Update(context.Background(), plisCfg, metav1.UpdateOptions{})
 		return err
 	})
 

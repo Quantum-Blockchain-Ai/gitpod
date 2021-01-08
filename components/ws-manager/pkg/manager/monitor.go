@@ -129,7 +129,7 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 }
 
 func (m *Monitor) connectToPodWatch() error {
-	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(workspaceObjectListOptions())
+	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("cannot watch pods: %w", err)
 	}
@@ -139,7 +139,7 @@ func (m *Monitor) connectToPodWatch() error {
 }
 
 func (m *Monitor) connectToConfigMapWatch() error {
-	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(workspaceObjectListOptions())
+	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("cannot watch config maps: %w", err)
 	}
@@ -716,7 +716,7 @@ func (m *Monitor) actOnConfigMapEvent(ctx context.Context, status *api.Workspace
 
 		// the workspace has stopped, we don't need the workspace state configmap anymore
 		propagationPolicy := metav1.DeletePropagationForeground
-		err = m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Delete(cfgmap.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Delete(context.Background(), cfgmap.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("cannot delete PLIS config map: %w", err)
 		}
@@ -1303,7 +1303,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 // deleteDanglingServices removes services for which there is no corresponding workspace pod anymore
 func (m *Monitor) deleteDanglingServices() error {
-	endpoints, err := m.manager.Clientset.CoreV1().Endpoints(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	endpoints, err := m.manager.Clientset.CoreV1().Endpoints(m.manager.Config.Namespace).List(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingServices: %w", err)
 	}
@@ -1336,7 +1336,7 @@ func (m *Monitor) deleteDanglingServices() error {
 		}
 
 		// this relies on the Kubernetes convention that endpoints have the same name as their services
-		err = servicesClient.Delete(e.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = servicesClient.Delete(context.Background(), e.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			m.OnError(xerrors.Errorf("deleteDanglingServices: %w", err))
 			continue
@@ -1349,7 +1349,7 @@ func (m *Monitor) deleteDanglingServices() error {
 
 // deleteDanglingPodLifecycleIndependentState removes PLIS config maps for which no pod exists and which have exceded lonelyPLISSurvivalTime
 func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
@@ -1365,7 +1365,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
 	}
 
 	cfgmapsClient := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace)
-	plisConfigmaps, err := cfgmapsClient.List(workspaceObjectListOptions())
+	plisConfigmaps, err := cfgmapsClient.List(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
@@ -1401,7 +1401,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
 		//       Prior to deletion we should send a final stopped update.
 
 		propagationPolicy := metav1.DeletePropagationForeground
-		err = cfgmapsClient.Delete(cfgmap.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = cfgmapsClient.Delete(context.Background(), cfgmap.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil {
 			m.OnError(xerrors.Errorf("cannot delete too old PLIS config map: %w", err))
 			continue
@@ -1417,7 +1417,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
 	defer tracing.FinishSpan(span, nil)
 
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}
@@ -1454,7 +1454,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	}
 
 	// timeout PLIS only workspaces
-	allPlis, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	allPlis, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).List(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}

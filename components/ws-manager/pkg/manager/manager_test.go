@@ -101,7 +101,7 @@ func TestControlPort(t *testing.T) {
 			}
 
 			result.Response = resp
-			result.PortsService, _ = manager.Clientset.CoreV1().Services(manager.Config.Namespace).Get(getPortsServiceName(startCtx.Request.ServicePrefix), metav1.GetOptions{})
+			result.PortsService, _ = manager.Clientset.CoreV1().Services(manager.Config.Namespace).Get(context.Background(), getPortsServiceName(startCtx.Request.ServicePrefix), metav1.GetOptions{})
 
 			return &result
 		},

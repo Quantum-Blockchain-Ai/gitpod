@@ -6,6 +6,7 @@ package manager
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -222,7 +223,7 @@ func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
 	}
 	serviceClient := m.Clientset.CoreV1().Services(m.Config.Namespace)
 	if wso.TheiaService == nil {
-		service, err := serviceClient.Get(getTheiaServiceName(servicePrefix), metav1.GetOptions{})
+		service, err := serviceClient.Get(context.Background(), getTheiaServiceName(servicePrefix), metav1.GetOptions{})
 		if err == nil {
 			wso.TheiaService = service
 		}
@@ -232,7 +233,7 @@ func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
 		}
 	}
 	if wso.PortsService == nil {
-		service, err := serviceClient.Get(getPortsServiceName(servicePrefix), metav1.GetOptions{})
+		service, err := serviceClient.Get(context.Background(), getPortsServiceName(servicePrefix), metav1.GetOptions{})
 		if err == nil {
 			wso.PortsService = service
 		}
@@ -262,7 +263,7 @@ func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
 			return fmt.Errorf("cannot act on pod %s: has no %s annotation", wso.Pod.Name, workspaceIDAnnotation)
 		}
 
-		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(context.Background(), getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
 		if !isKubernetesObjNotFoundError(err) && err != nil {
 			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 		}

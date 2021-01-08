@@ -199,7 +199,7 @@ func (r *StatusRecoder) Log() []api.WorkspaceStatus {
 func ensureIntegrationTestTheiaLabelOnNodes(client kubernetes.Interface, namespace string) (version string, err error) {
 	version = "wsman-test"
 
-	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: fmt.Sprintf("gitpod.io/theia.%s", version)})
+	nodes, err := client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("gitpod.io/theia.%s", version)})
 	if err != nil {
 		log.WithError(err).Warnf("cannot list nodes to check if one has the gitpod.io/theia.%s label", version)
 		return "wsman-test", nil
@@ -365,7 +365,7 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	if err != nil {
 		t.Errorf("cannot start test workspace: %q", err)
 	}
-	defer manager.Clientset.CoreV1().Pods(manager.Config.Namespace).Delete(fmt.Sprintf("ws-%s", instanceID), metav1.NewDeleteOptions(30))
+	defer manager.Clientset.CoreV1().Pods(manager.Config.Namespace).Delete(context.Background(), fmt.Sprintf("ws-%s", instanceID), *metav1.NewDeleteOptions(30))
 
 	test.PostStart(t, monitor, instanceID, updates)
 }

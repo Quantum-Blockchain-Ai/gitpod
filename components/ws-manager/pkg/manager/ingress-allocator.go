@@ -5,6 +5,7 @@
 package manager
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -149,7 +150,7 @@ func (pa *kubernetesBackedPortAllocator) Stop() {
 // reconciliateState loads the current port mappings from kubernetes service objects
 func (pa *kubernetesBackedPortAllocator) reconciliateState() error {
 	// read services and map to allocated ports
-	services, err := pa.clientset.CoreV1().Services(pa.namespace).List(metav1.ListOptions{
+	services, err := pa.clientset.CoreV1().Services(pa.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=true", markerLabel),
 	})
 	if err != nil {

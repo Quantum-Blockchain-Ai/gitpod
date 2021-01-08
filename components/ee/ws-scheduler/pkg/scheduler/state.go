@@ -67,18 +67,20 @@ type ResourceUsage struct {
 	UsedOther *res.Quantity
 }
 
-func newResourceUsage(total *res.Quantity) ResourceUsage {
-	return ResourceUsage{
-		Total:        total.Copy(),
+func newResourceUsage(total res.Quantity) ResourceUsage {
+	copy := total.DeepCopy()
+	result := ResourceUsage{
+		Total:        &copy,
 		Available:    res.NewQuantity(0, res.BinarySI),
 		UsedHeadless: res.NewQuantity(0, res.BinarySI),
 		UsedOther:    res.NewQuantity(0, res.BinarySI),
 		UsedRegular:  res.NewQuantity(0, res.BinarySI),
 	}
+	return result
 }
 
 func (r *ResourceUsage) updateAvailable() {
-	r.Available = r.Total.Copy()
+	r.Total.DeepCopyInto(r.Available)
 	r.Available.Sub(*r.UsedHeadless)
 	r.Available.Sub(*r.UsedOther)
 	r.Available.Sub(*r.UsedRegular)
@@ -137,10 +139,10 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 		node.PodSlots.Available = node.PodSlots.Total
 
 		assignedPods := nodeToPod[nodeName]
-		allocatableRAMWithSafetyBuffer := node.Node.Status.Allocatable.Memory().Copy()
+		allocatableRAMWithSafetyBuffer := node.Node.Status.Allocatable.Memory().DeepCopy()
 		allocatableRAMWithSafetyBuffer.Sub(*ramSafetyBuffer)
 		node.RAM = newResourceUsage(allocatableRAMWithSafetyBuffer)
-		node.EphemeralStorage = newResourceUsage(node.Node.Status.Allocatable.StorageEphemeral())
+		node.EphemeralStorage = newResourceUsage(*node.Node.Status.Allocatable.StorageEphemeral())
 		node.Pods = make([]*corev1.Pod, 0, len(assignedPods))
 		for pn := range assignedPods {
 			pod := pds[pn]

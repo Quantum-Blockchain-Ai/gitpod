@@ -84,7 +84,7 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 				return &gold{Error: err.Error()}
 			}
 
-			cms, err := manager.Clientset.CoreV1().ConfigMaps(manager.Config.Namespace).List(metav1.ListOptions{})
+			cms, err := manager.Clientset.CoreV1().ConfigMaps(manager.Config.Namespace).List(context.Background(), metav1.ListOptions{})
 			if err != nil {
 				panic(err)
 			}

@@ -5,6 +5,7 @@
 package hosts
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -45,7 +46,7 @@ func (s *ServiceClusterIPSource) Start() error {
 	opts := metav1.ListOptions{
 		LabelSelector: s.Selector,
 	}
-	srvs, err := s.Clientset.CoreV1().Services(s.Namespace).List(opts)
+	srvs, err := s.Clientset.CoreV1().Services(s.Namespace).List(context.Background(), opts)
 	if err != nil {
 		return xerrors.Errorf("cannot list services: %w", err)
 	}
@@ -66,7 +67,7 @@ func (s *ServiceClusterIPSource) Start() error {
 	}
 	s.publish()
 
-	wtch, err := s.Clientset.CoreV1().Services(s.Namespace).Watch(opts)
+	wtch, err := s.Clientset.CoreV1().Services(s.Namespace).Watch(context.Background(), opts)
 	if err != nil {
 		return xerrors.Errorf("cannot watch services: %w", err)
 	}
@@ -121,7 +122,7 @@ func (s *ServiceClusterIPSource) Start() error {
 				log.WithField("name", s.ID).Warn("Kubernetes service host source lost Kubernetes connection - reconnecting")
 				time.Sleep(10 * time.Second)
 
-				wtch, err = s.Clientset.CoreV1().Services(s.Namespace).Watch(opts)
+				wtch, err = s.Clientset.CoreV1().Services(s.Namespace).Watch(context.Background(), opts)
 				if err != nil {
 					log.WithField("name", s.ID).WithError(err).Warn("cannot watch services: %w", err)
 					continue
@@ -233,7 +234,7 @@ func (s *PodHostIPSource) Start() error {
 	opts := metav1.ListOptions{
 		LabelSelector: s.Selector,
 	}
-	pods, err := s.Clientset.CoreV1().Pods(s.Namespace).List(opts)
+	pods, err := s.Clientset.CoreV1().Pods(s.Namespace).List(context.Background(), opts)
 	if err != nil {
 		return xerrors.Errorf("cannot list pods: %w", err)
 	}
@@ -246,7 +247,7 @@ func (s *PodHostIPSource) Start() error {
 	}
 	s.publish()
 
-	wtch, err := s.Clientset.CoreV1().Pods(s.Namespace).Watch(opts)
+	wtch, err := s.Clientset.CoreV1().Pods(s.Namespace).Watch(context.Background(), opts)
 	if err != nil {
 		return xerrors.Errorf("cannot watch pods: %w", err)
 	}
@@ -288,7 +289,7 @@ func (s *PodHostIPSource) Start() error {
 				log.WithField("name", s.ID).Warn("Kubernetes pod host source lost Kubernetes connection - reconnecting")
 				time.Sleep(10 * time.Second)
 
-				wtch, err = s.Clientset.CoreV1().Pods(s.Namespace).Watch(opts)
+				wtch, err = s.Clientset.CoreV1().Pods(s.Namespace).Watch(context.Background(), opts)
 				if err != nil {
 					log.WithField("name", s.ID).WithError(err).Warn("cannot watch pods: %w", err)
 					continue
