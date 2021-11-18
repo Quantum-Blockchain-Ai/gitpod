@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/golang/protobuf v1.3.5
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.0.1
+	github.com/opencontainers/image-spec v1.0.2
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
